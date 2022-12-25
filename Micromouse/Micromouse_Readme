@@ -1,1 +1,6 @@
-
+The components used in the project are as follows : 
+1. Encoder Motor
+2. Motor Driver
+3. Arduino Nano
+4. IR sensors
+5. Li-po battery (3.7V)
