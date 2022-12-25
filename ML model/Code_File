@@ -1,0 +1,130 @@
+**Importing libraries and dataset**
+"""
+
+import numpy as np
+import pandas as pd 
+import matplotlib.pyplot as plt
+import seaborn as sn
+import warnings
+import os
+
+data = pd.read_csv('/content/drive/MyDrive/Datasets/Epileptic Seizure Recognition.csv')
+data = data.drop(columns = data.columns[0])
+
+"""**READ AND SHOW DATASET**
+
+*   Original dataset from the reference consists of 5 different folders, each with 100 files
+
+
+*   Each file representing a single subject
+*   Each file is a recording of brain activity for 23 seconds.
+
+
+
+
+
+
+*   Each person have 4097 data points for 23 second recording.
+
+
+
+
+*   Datapoints are devided into different groups such that each group contains 178 datapoints for 1 second.
+"""
+
+data.head(10)
+
+print(data.shape)
+
+cols = data.columns
+tgt = data.y
+tgt[tgt > 1] = 0
+ax = sn.countplot(tgt,label="Count")
+non_seizure, seizure = tgt.value_counts()
+print('The number of trials for the non-seizure class is:', non_seizure)
+print('The number of trials for the seizure class is:', seizure)
+
+data.info()
+
+data.describe()
+
+X = data.iloc[:,1:178].values
+X.shape
+
+plt.subplot(511)
+plt.plot(X[1,:])
+plt.title('Classes')
+plt.ylabel('uV')
+plt.subplot(512)
+plt.plot(X[7,:])
+plt.subplot(513)
+plt.plot(X[12,:])
+plt.subplot(514)
+plt.plot(X[0,:])
+plt.subplot(515)
+plt.plot(X[2,:])
+plt.xlabel('Samples')
+
+Y = data.iloc[:,178].values
+Y.shape
+
+Y[Y>1]=0
+Y
+
+from sklearn.model_selection import train_test_split, cross_val_score
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size = 0.3, random_state=0)
+
+"""**Feature reduction**"""
+
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import RandomForestClassifier
+
+select = SelectFromModel(RandomForestClassifier(n_estimators=50,random_state=80),threshold="mean")
+select.fit(X_train,y_train)
+X_train_selected = select.transform(X_train)
+
+print("X_train.shape: {}" .format(X_train.shape))
+print("X_train_selected.shape: {}".format(X_train_selected.shape))
+
+X_test_selected = select.transform(X_test)
+print("X_test_selected.shape: {}".format(X_test_selected.shape))
+model = RandomForestClassifier(n_estimators=100,random_state=42)
+
+model.fit(X_train,y_train)
+print("Score with all features: {:.4f}".format(model.score(X_test,y_test)))
+
+model.fit(X_train_selected,y_train)
+print("Score with selected features: {:.4f}".format(model.score(X_test_selected,y_test)))
+
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train1 = sc.fit_transform(X_train_selected)
+X_test1 = sc.transform(X_test_selected)
+
+"""**Dimension reduction**"""
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2, svd_solver='full')
+X_train_pca = pca.fit_transform(X_train1, y_train)
+X_test_pca = pca.transform(X_test1)
+
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+lda = LDA(n_components = 1 ,solver='svd')
+X_train_lda = lda.fit_transform(X_train1,y_train )
+X_test_lda = lda.transform(X_test1)
+
+"""**Classification**"""
+
+from sklearn.svm import SVC
+clf = SVC(kernel = 'rbf')
+clf.fit(X_train_pca , y_train)
+y_pred_svc = clf.predict(X_test_pca)
+acc_svc = round(clf.score( X_train_pca , y_train) * 100, 2)
+print (str(acc_svc) + '%')
+
+from sklearn.svm import SVC
+clf = SVC(kernel = 'rbf')
+clf.fit(X_train_lda , y_train)
+y_pred_svc = clf.predict(X_test_lda)
+acc_svc = round(clf.score( X_train_lda , y_train) * 100, 2)
+print ("Accuracy is:" , str(acc_svc) + '%')
