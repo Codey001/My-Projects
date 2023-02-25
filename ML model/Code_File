@@ -1,6 +1,8 @@
-**Importing libraries and dataset**
-"""
+'''Adding google drive access'''
+from google.colab import drive
+drive.mount('/content/drive')
 
+'''Importing libraries'''
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
@@ -8,29 +10,18 @@ import seaborn as sn
 import warnings
 import os
 
-data = pd.read_csv('/content/drive/MyDrive/Datasets/Epileptic Seizure Recognition.csv')
+'''Importing data set'''
+data = pd.read_csv('/content/drive/MyDrive/Datasets/eeg.csv')
 data = data.drop(columns = data.columns[0])
 
-"""**READ AND SHOW DATASET**
+'''**READ AND SHOW DATASET**
 
 *   Original dataset from the reference consists of 5 different folders, each with 100 files
-
-
 *   Each file representing a single subject
 *   Each file is a recording of brain activity for 23 seconds.
-
-
-
-
-
-
 *   Each person have 4097 data points for 23 second recording.
-
-
-
-
 *   Datapoints are devided into different groups such that each group contains 178 datapoints for 1 second.
-"""
+'''
 
 data.head(10)
 
